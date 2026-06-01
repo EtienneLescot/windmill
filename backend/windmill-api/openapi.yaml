@@ -1,7 +1,7 @@
 openapi: "3.0.3"
 
 info:
-  version: 1.711.0
+  version: 1.713.1
   title: Windmill API
 
   contact:
@@ -4070,6 +4070,66 @@ paths:
                   - effective_ai_config
                   - has_instance_ai_config
                   - uses_instance_ai_config
+
+  /w/{workspace}/ai/openai_chatgpt_account/device/start:
+    post:
+      summary: start OpenAI ChatGPT account device auth
+      operationId: startOpenAIChatGPTAccountDeviceAuth
+      tags:
+        - ai
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+      responses:
+        "200":
+          description: OpenAI Device Flow challenge
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAIChatGPTAccountDeviceStartResponse"
+
+  /w/{workspace}/ai/openai_chatgpt_account/device/complete:
+    post:
+      summary: complete OpenAI ChatGPT account device auth
+      operationId: completeOpenAIChatGPTAccountDeviceAuth
+      tags:
+        - ai
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenAIChatGPTAccountDeviceCompleteRequest"
+      responses:
+        "200":
+          description: OpenAI Device Flow completion status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAIChatGPTAccountDeviceCompleteResponse"
+
+  /w/{workspace}/ai/openai_chatgpt_account/status:
+    post:
+      summary: get OpenAI ChatGPT account auth status
+      operationId: getOpenAIChatGPTAccountStatus
+      tags:
+        - ai
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceId"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/OpenAIChatGPTAccountStatusRequest"
+      responses:
+        "200":
+          description: OpenAI ChatGPT account auth status
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAIChatGPTAccountStatusResponse"
 
   /w/{workspace}/workspaces/get_copilot_settings_state:
     get:
@@ -9751,6 +9811,9 @@ paths:
                       type: boolean
                     deployment_message:
                       type: string
+                    skip_draft_deletion:
+                      type: boolean
+                      description: "When true (set by the CLI / git sync), deploying this flow does not delete an existing user draft at the same path."
       responses:
         "201":
           description: flow created
@@ -9792,6 +9855,9 @@ paths:
                   properties:
                     deployment_message:
                       type: string
+                    skip_draft_deletion:
+                      type: boolean
+                      description: "When true (set by the CLI / git sync), deploying this flow does not delete an existing user draft at the same path."
 
       responses:
         "200":
@@ -10290,6 +10356,9 @@ paths:
                   type: array
                   items:
                     type: string
+                skip_draft_deletion:
+                  type: boolean
+                  description: "When true (set by the CLI / git sync), deploying this app does not delete an existing user draft at the same path."
               required:
                 - path
                 - value
@@ -10342,6 +10411,9 @@ paths:
                       type: array
                       items:
                         type: string
+                    skip_draft_deletion:
+                      type: boolean
+                      description: "When true (set by the CLI / git sync), deploying this app does not delete an existing user draft at the same path."
                   required:
                     - path
                     - value
@@ -10660,6 +10732,9 @@ paths:
                   type: array
                   items:
                     type: string
+                skip_draft_deletion:
+                  type: boolean
+                  description: "When true (set by the CLI / git sync), deploying this app does not delete an existing user draft at the same path."
       responses:
         "200":
           description: app updated
@@ -10706,6 +10781,9 @@ paths:
                       type: array
                       items:
                         type: string
+                    skip_draft_deletion:
+                      type: boolean
+                      description: "When true (set by the CLI / git sync), deploying this app does not delete an existing user draft at the same path."
                 js:
                   type: string
                 css:
@@ -20971,6 +21049,77 @@ components:
           format: int64
           description: Number of workers that pinged within last 5 minutes
 
+    OpenAIChatGPTAccountDeviceStartResponse:
+      type: object
+      properties:
+        verification_uri:
+          type: string
+        user_code:
+          type: string
+        device_auth_id:
+          type: string
+        interval_ms:
+          type: integer
+          format: uint64
+        expires_at:
+          type: string
+      required:
+        - verification_uri
+        - user_code
+        - device_auth_id
+        - interval_ms
+        - expires_at
+
+    OpenAIChatGPTAccountDeviceCompleteRequest:
+      type: object
+      properties:
+        device_auth_id:
+          type: string
+        user_code:
+          type: string
+        resource_path:
+          type: string
+      required:
+        - device_auth_id
+        - user_code
+
+    OpenAIChatGPTAccountDeviceCompleteResponse:
+      type: object
+      properties:
+        status:
+          type: string
+        resource_path:
+          type: string
+        account_id:
+          type: string
+        expires_at:
+          type: string
+      required:
+        - status
+
+    OpenAIChatGPTAccountStatusRequest:
+      type: object
+      properties:
+        resource_path:
+          type: string
+      required:
+        - resource_path
+
+    OpenAIChatGPTAccountStatusResponse:
+      type: object
+      properties:
+        connected:
+          type: boolean
+        resource_path:
+          type: string
+        account_id:
+          type: string
+        expires_at:
+          type: string
+      required:
+        - connected
+        - resource_path
+
     DetailedHealthResponse:
       type: object
       description: Detailed health status response (always fresh, no caching)
@@ -21460,6 +21609,7 @@ components:
       enum:
         [
           openai,
+          openai_chatgpt_account,
           azure_openai,
           anthropic,
           mistral,
@@ -21883,6 +22033,9 @@ components:
           type: array
           items:
             type: string
+        skip_draft_deletion:
+          type: boolean
+          description: "When true (set by the CLI / git sync), deploying this script does not delete an existing user draft at the same path."
 
       required:
         - path
@@ -25405,6 +25558,11 @@ components:
           example: "Connection timeout"
         tag:
           $ref: "#/components/schemas/CustomInstanceDbTag"
+        used_by_workspaces:
+          type: array
+          items:
+            type: string
+          description: Workspaces that reference this database via a ducklake catalog or datatable database with resource_type 'instance'. Computed at request time, not persisted.
 
     NewSqsTrigger:
       type: object
